@@ -1,58 +1,86 @@
+# main.py
+
 import gymnasium as gym
-import numpy as np
-from model import CartPoleCAAgent
+from env import obs_to_bitstring
+from ca import ca_step, default_rule, generate_rule, decide_action
+from logger import create_logger, log_step
 
-num_generations = 5
-num_agents = 10
-num_best_agents = 3
-num_eval_episodes = 5
+# -------------------------
+# CA Control Loop
+# -------------------------
+# This script runs one episode of CartPole using a Cellular Automaton (CA)
+# to process observations and determine actions. The CA rule transforms the
+# encoded binary observation through several steps, after which a decision
+# function selects an action based on the transformed state.
 
+# Initialize environment with rendering enabled
 env = gym.make("CartPole-v1", render_mode="human")
+obs, _ = env.reset()
 
-population = [CartPoleCAAgent() for _ in range(num_agents)]
+# -------------------------
+# Configuration Parameters
+# -------------------------
+number_of_steps = 3                                                                 # How many CA iterations to apply before decision
+num_episodes = 5                                                                    # Number of episodes to run per rule
+render = False                                                                      # Set to True to enable GUI rendering
 
-for generation in range(num_generations):
-    print(f"Generasjon {generation + 1} starter...")
+# -------------------------
+# Rule Evaluation Loop
+# -------------------------
+rule_results = []
 
-    agent_scores = np.zeros(num_agents)
+for rule_index in range(256):
+    rule = generate_rule(rule_index)
+    scores = []
 
-    for i, agent in enumerate(population):
-        print(f"\nEvaluering av agent {i+1}/{num_agents} - Terskler: {agent.thresholds}")
+    print(f"\n=== Evaluating Rule {rule_index:03} - {rule} ===")
 
-        for episode_num in range(num_eval_episodes):
-            obs, info = env.reset()
-            episode_over = False
-            score = 0
+    # Create one log file per rule, open once before episode loop
+    log_file, logger = create_logger(filename=f"rule_{rule_index:03}.csv")
 
-            while not episode_over:
-                action = agent.act(obs)
-                obs, reward, terminated, truncated, info = env.step(action)
+    for episode in range(num_episodes):
+        env = gym.make("CartPole-v1", render_mode="human" if render else None)
+        obs, _ = env.reset()
 
-                # env.render()
-                score += reward
+        terminated = False
+        step_count = 0
 
-                episode_over = terminated or truncated
+        while not terminated:
+            bit_pre = obs_to_bitstring(obs)
+            bit_post = bit_pre
+            for _ in range(number_of_steps):
+                bit_post = ca_step(bit_post, rule)
 
-            agent_scores[i] += score
+            action = decide_action(bit_post, method='sum')
+            obs, reward, terminated, truncated, info = env.step(action)
 
-    best_agents_idx = np.argsort(agent_scores)[-num_best_agents:][::-1]
-    best_agents = [population[i] for i in best_agents_idx]
+            log_step(
+                writer=logger,
+                episode=episode,
+                step=step_count,
+                obs=obs,
+                bit_pre=bit_pre,
+                bit_post=bit_post,
+                action=action,
+                reward=reward,
+                terminated=terminated
+            )
 
-    print("\nBeste agenter i generasjonen:")
-    for rank, idx in enumerate(best_agents_idx):
-        print(f" - Agent {idx}: Score {agent_scores[idx]} | Terskler: {population[idx].thresholds}")
+            step_count += 1
 
-    new_population = []
+        env.close()
+        scores.append(step_count)
 
-    new_population.extend(best_agents)
+    log_file.close()
 
-    while len(new_population) < num_agents:
-        parent1, parent2 = np.random.choice(best_agents, 2)
-        child = CartPoleCAAgent.crossover(parent1, parent2)
-        child.mutate()
-        new_population.append(child)
+    avg_score = sum(scores) / len(scores)
+    print(f"Rule {rule_index:03} average score: {avg_score:.2f}")
+    rule_results.append((rule_index, avg_score))
 
-    population = new_population
-
-env.close()
-print(f"Evolusjon ferdig etter {num_generations} generasjoner!")
+# -------------------------
+# Summary of All Rules
+# -------------------------
+best = max(rule_results, key=lambda x: x[1])
+print("\n=== Best Rule Summary ===")
+print(f"Best Rule Index: {best[0]}")
+print(f"Average Score:   {best[1]:.2f}")
