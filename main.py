@@ -1,87 +1,61 @@
-# main.py
-
 import gymnasium as gym
-from env import obs_to_bitstring
-from ca import ca_step, generate_rule, decide_action
-from logger import create_logger, log_step
+from dynamic_logger import create_logger, log_step
+from controllers.ca_controller import ca_action
+from controllers.dqn_controller import dqn_action, dqn_train
 
-# -------------------------
-# CA Control Loop
-# -------------------------
-# This script runs one episode of CartPole using a Cellular Automaton (CA)
-# to process observations and determine actions. The CA rule transforms the
-# encoded binary observation through several steps, after which a decision
-# function selects an action based on the transformed state.
+# CONFIGS
+CONTROLLER   = 'dqn'        # 'ca' or 'dqn'
+EPISODES     = 5           # number of episodes to run
+RENDER_MODE  = None        # 'human' or None
+LOG_FILENAME = f"run_{CONTROLLER}.csv"
 
-# Initialize environment with rendering enabled
-env = gym.make("CartPole-v1", render_mode="human")
-obs, _ = env.reset()
+# LOGIC TO SELECTED THE CONTROLLER BASED ON INPUT FROM ABOVE
 
-# -------------------------
-# Configuration Parameters
-# -------------------------
-number_of_steps = 10                                                                # How many CA iterations to apply before decision
-num_episodes = 20                                                                   # Number of episodes to run per rule
-render = False                                                                      # Set to True to enable GUI rendering
-radius = 2                                                                          # Neighborhood radius (1 = 3-bit, 2 = 5-bit, etc.)
-neighborhood_size = 2 * radius + 1
+# Nå har du dqn og ca
+if CONTROLLER == 'ca':
+    from controllers.ca_controller import ca_action as controller
+    fields = ['episode','step','obs','bit_pre','bit_post','action','reward','terminated']
 
-# -------------------------
-# Rule Evaluation Loop
-# -------------------------
-rule_results = []
+elif CONTROLLER == 'dqn':
+    from controllers.dqn_controller import dqn_action as controller, dqn_train
+    dqn_train()
+    fields = ['episode','step','obs','action','reward','terminated']
 
-for rule_index in range(2 ** (2 ** neighborhood_size)):
-    rule = generate_rule(rule_index, neighborhood_size=neighborhood_size)
-    scores = []
+else:
+    raise ValueError(f"Unknown controller: {CONTROLLER}")
 
-    print(f"\n=== Evaluating Rule {rule_index:03} - Radius {radius} ===")
+# ENVIRONMENT AND LOGGER SETUP
+env = gym.make('CartPole-v1', render_mode=RENDER_MODE)
+log_file, logger, fields = create_logger(
+    directory='logs',
+    filename=LOG_FILENAME,
+    fieldnames=fields
+)
 
-    log_file, logger = create_logger(filename=f"rule_r{radius}_{rule_index:03}.csv")
-
-    for episode in range(num_episodes):
-        env = gym.make("CartPole-v1", render_mode="human" if render else None)
+# RUN THE EPISODES
+def run(episodes=EPISODES):
+    for ep in range(episodes):
         obs, _ = env.reset()
-
-        terminated = False
-        step_count = 0
-
-        while not terminated:
-            bit_pre = obs_to_bitstring(obs)
-            bit_post = bit_pre
-            for _ in range(number_of_steps):
-                bit_post = ca_step(bit_post, rule, radius=radius)
-
-            action = decide_action(bit_post, method='sum')
-            obs, reward, terminated, truncated, info = env.step(action)
-
+        done = False
+        steps = 0
+        while not done:
+            action = controller(obs)
+            obs, reward, term, trunc, _ = env.step(action)
+            done = term or trunc
             log_step(
                 writer=logger,
-                episode=episode,
-                step=step_count,
+                fieldnames=fields,
+                episode=ep,
+                step=steps,
                 obs=obs,
-                bit_pre=bit_pre,
-                bit_post=bit_post,
                 action=action,
                 reward=reward,
-                terminated=terminated
+                terminated=done,
             )
+            steps += 1
+        print(f"Episode {ep}: {steps} steps")
 
-            step_count += 1
-
-        env.close()
-        scores.append(step_count)
-
+if __name__ == '__main__':
+    run()
     log_file.close()
-
-    avg_score = sum(scores) / len(scores)
-    print(f"Rule {rule_index:03} avg score: {avg_score:.2f}")
-    rule_results.append((rule_index, avg_score))
-
-# -------------------------
-# Summary of All Rules
-# -------------------------
-best = max(rule_results, key=lambda x: x[1])
-print("\n=== Best Rule ===")
-print(f"Rule Index:  {best[0]}")
-print(f"Average Score: {best[1]:.2f}")
+    env.close()
