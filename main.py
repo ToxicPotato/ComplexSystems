@@ -1,11 +1,13 @@
+# main.py
+
 import os
 import gymnasium as gym
 from matplotlib import pyplot as plt
 
 from dynamic_logger import create_logger, log_step
 
-# choose 'ca' or 'dqn'
-CONTROLLER   = 'ca'
+# choose 'ca', 'dqn', or 'lqr'
+CONTROLLER   = 'lqr'
 NUM_EPISODES = 100
 RENDER_MODE  = None  # 'human' or None
 LOG_FILENAME = f"run_{CONTROLLER}.csv"
@@ -24,6 +26,18 @@ if CONTROLLER == 'ca':
         'observation_state',
         'bit_pre',
         'bit_post',
+        'action_taken',
+        'reward_received',
+        'terminated'
+    ]
+
+elif CONTROLLER == 'lqr':
+    from controllers.lqr_controller import lqr_action as controller_function
+
+    log_fields = [
+        'episode_index',
+        'step_count',
+        'observation_state',
         'action_taken',
         'reward_received',
         'terminated'
@@ -61,12 +75,16 @@ def run_episodes():
     lengths = []
     for episode_index in range(NUM_EPISODES):
         observation_state, _ = env.reset()
-        terminated = False
+        done = False
         step_count = 0
 
-        while not terminated:
+        while not done:
             if CONTROLLER == 'ca':
                 action_taken, bit_pre, bit_post = controller_function(observation_state)
+            elif CONTROLLER == 'lqr':
+                action_taken, _, _ = controller_function(observation_state)
+                bit_pre = ""
+                bit_post = ""
             else:
                 action_taken = controller_function(observation_state)
                 bit_pre = ""
@@ -89,6 +107,7 @@ def run_episodes():
                 bit_post
             )
 
+            done = terminated or truncated  
             observation_state = new_observation
             step_count += 1
 
