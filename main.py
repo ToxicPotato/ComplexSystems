@@ -1,7 +1,5 @@
 import gymnasium as gym
 from dynamic_logger import create_logger, log_step
-from controllers.ca_controller import ca_action
-from controllers.dqn_controller import dqn_action, dqn_train
 
 # CONFIGS
 CONTROLLER   = 'ca'        # 'ca' or 'dqn'
