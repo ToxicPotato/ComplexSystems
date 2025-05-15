@@ -6,7 +6,7 @@ from scipy.linalg import solve_continuous_are
 # -------------------------
 # Static Constants
 # -------------------------
-GRAVITY = 9.8  # m/s^2
+GRAVITY = 9.8                                                                       # m/s^2
 
 # -------------------------
 # System Matrices Generator

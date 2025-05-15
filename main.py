@@ -7,9 +7,9 @@ from matplotlib import pyplot as plt
 from dynamic_logger import create_logger, log_step
 
 # choose 'ca', 'dqn', or 'lqr'
-CONTROLLER   = 'lqr'
-NUM_EPISODES = 100
-RENDER_MODE  = None  # 'human' or None
+CONTROLLER   = 'pid'
+NUM_EPISODES = 10
+RENDER_MODE  = 'human'  # 'human' or None
 LOG_FILENAME = f"run_{CONTROLLER}.csv"
 
 # If CA, run GA first to find best rule
@@ -34,6 +34,18 @@ if CONTROLLER == 'ca':
 elif CONTROLLER == 'lqr':
     from controllers.lqr_controller import lqr_action as controller_function
 
+    log_fields = [
+        'episode_index',
+        'step_count',
+        'observation_state',
+        'action_taken',
+        'reward_received',
+        'terminated'
+    ]
+
+elif CONTROLLER == 'pid':
+    from controllers.pid_controller import pid_action as controller_function
+    
     log_fields = [
         'episode_index',
         'step_count',
@@ -82,6 +94,10 @@ def run_episodes():
             if CONTROLLER == 'ca':
                 action_taken, bit_pre, bit_post = controller_function(observation_state)
             elif CONTROLLER == 'lqr':
+                action_taken, _, _ = controller_function(observation_state)
+                bit_pre = ""
+                bit_post = ""
+            elif CONTROLLER == 'pid':
                 action_taken, _, _ = controller_function(observation_state)
                 bit_pre = ""
                 bit_post = ""
