@@ -1,75 +1,56 @@
 # ca.py
 
 # -------------------------
-# Cellular Automata Rule
-# -------------------------
-# This rule defines the local update logic based on the 3-bit neighborhood (L, C, R).
-# The rule is represented as a list of 8 binary outcomes, corresponding to the 8 possible LCR patterns.
-# The index corresponds to the binary pattern interpreted as an integer (e.g., '111' -> 7).
-# Example: Rule 30 => [0, 1, 1, 1, 1, 0, 0, 0]
-
-def default_rule() -> list[int]:
-    """
-    Returns a default CA rule as a list of 8 binary values.
-    Each index represents a 3-bit pattern (L-C-R), and the value is the next state for the center bit.
-
-    Returns:
-        list[int]: Rule mapping 3-bit neighborhoods to new center bit values
-    """
-    return [0, 1, 1, 1, 1, 0, 0, 0]                                                 # Rule 30: chaotic pattern generator
-
-# -------------------------
 # CA Rule Generator
 # -------------------------
-def generate_rule(index: int) -> list[int]:
+def generate_rule(index: int, neighborhood_size: int = 3) -> list[int]:
     """
-    Generates a CA rule from an integer index (0 to 255).
-    The index is interpreted as an 8-bit binary number.
+    Generates a CA rule as a binary list given a rule index and neighborhood size.
 
     Parameters:
-        index (int): Integer between 0 and 255
+        index (int): The rule number to convert to a binary rule list
+        neighborhood_size (int): Size of the neighborhood window (must be odd)
 
     Returns:
-        list[int]: List of 8 binary values representing the rule
+        list[int]: Binary rule list of length 2^neighborhood_size
+
+    Notes:
+        For neighborhood_size = 3 (radius 1), there are 2^3 = 8 rule entries.
+        For neighborhood_size = 5 (radius 2), there are 2^5 = 32 rule entries.
     """
-    return [int(bit) for bit in format(index, '08b')]
+    rule_size = 2 ** neighborhood_size
+    bin_rule = format(index, f"0{rule_size}b")                                      # Zero-padded binary string
+    return [int(b) for b in bin_rule]
 
 # -------------------------
 # CA Step Function
 # -------------------------
-def ca_step(bitstring: str, rule: list[int]) -> str:
+def ca_step(bitstring: str, rule: list[int], radius: int = 1) -> str:
     """
-    Performs one CA update step on a binary string using the given rule.
-    For each cell in the string, its next state is determined by the state of itself and its two neighbors.
-    This function uses wrap-around at the edges (i.e., circular CA).
+    Evolves a binary string one step using a Cellular Automaton rule.
 
     Parameters:
-        bitstring (str): Current binary state string (e.g., '01010101')
-        rule (list[int]): List of 8 binary values defining the L-C-R update rule
+        bitstring (str): The input binary string (e.g., '10101100')
+        rule (list[int]): The CA rule as a list of binary outputs, length 2^(2r+1)
+        radius (int): Number of neighboring bits on each side (default 1 = 3-bit CA)
 
     Returns:
-        str: New binary state string after applying CA rule to each cell
+        str: The new bitstring after applying the CA rule
+
+    Notes:
+        The CA is circular (wrap-around). For a radius of r, the neighborhood size is (2r + 1).
     """
-    next_state = ''                                                                 # Accumulator for new state
-    length = len(bitstring)                                                         # Total number of cells in the automaton
+    n = len(bitstring)                                                              # Total number of bits in the string
+    new_bits = ""                                                                   # Placeholder for the updated bitstring
+    width = 2 * radius + 1                                                          # Total width of neighborhood
 
-    # Loop through each cell
-    for i in range(length):
-        # Determine left, center, right using wrap-around
-        L = bitstring[(i - 1) % length]                                             # left neighbor (wraps around at start)
-        C = bitstring[i]                                                            # current cell (center)
-        R = bitstring[(i + 1) % length]                                             # right neighbor (wraps around at end)
+    for i in range(n):
+        # Construct neighborhood with wrapping around the ends
+        neighborhood = "".join(bitstring[(i + j) % n] for j in range(-radius, radius + 1))
+        index = int(neighborhood, 2)                                                # Convert neighborhood to integer index
+        new_bits += str(rule[index])                                                # Look up the rule output
 
-        # Create 3-bit pattern string and convert to integer index
-        neighborhood = int(L + C + R, 2)
-
-        # Get the new bit value from the rule using the index
-        new_bit = rule[neighborhood]
-
-        # Append the result to the new bitstring
-        next_state += str(new_bit)
-
-    return next_state
+    return new_bits
 
 # -------------------------
 # Action Decision Function
