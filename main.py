@@ -4,7 +4,7 @@ from controllers.ca_controller import ca_action
 from controllers.dqn_controller import dqn_action, dqn_train
 
 # CONFIGS
-CONTROLLER   = 'dqn'        # 'ca' or 'dqn'
+CONTROLLER   = 'ca'        # 'ca' or 'dqn'
 EPISODES     = 5           # number of episodes to run
 RENDER_MODE  = None        # 'human' or None
 LOG_FILENAME = f"run_{CONTROLLER}.csv"
