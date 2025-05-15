@@ -6,8 +6,8 @@ from matplotlib import pyplot as plt
 
 from dynamic_logger import create_logger, log_step
 
-# choose 'ca', 'dqn', or 'lqr'
-CONTROLLER   = 'pid'
+# choose 'ca', 'lqr', 'pid', or 'dqn'
+CONTROLLER   = 'lqr'
 NUM_EPISODES = 10
 RENDER_MODE  = 'human'  # 'human' or None
 LOG_FILENAME = f"run_{CONTROLLER}.csv"
