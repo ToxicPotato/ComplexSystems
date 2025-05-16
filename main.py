@@ -1,5 +1,3 @@
-# main.py
-
 import os
 import gymnasium as gym
 from matplotlib import pyplot as plt
@@ -7,18 +5,14 @@ from matplotlib import pyplot as plt
 from dynamic_logger import create_logger, log_step
 
 # choose 'ca', 'lqr', 'pid', or 'dqn'
-CONTROLLER   = 'lqr'
+CONTROLLER   = 'ca'
 NUM_EPISODES = 10
 RENDER_MODE  = 'human'  # 'human' or None
 LOG_FILENAME = f"run_{CONTROLLER}.csv"
 
-# If CA, run GA first to find best rule
+# Here we added a dynamic check for the selected controller
 if CONTROLLER == 'ca':
-    from utils.ca_ga_optimize import genetic_optimize_rule
-    from controllers.ca_controller import set_rule_index, ca_action as controller_function
-
-    best_rule = genetic_optimize_rule()
-    set_rule_index(best_rule)
+    from controllers.one_d_ca_controller import ca_action as controller_function
 
     log_fields = [
         'episode_index',
@@ -28,7 +22,7 @@ if CONTROLLER == 'ca':
         'bit_post',
         'action_taken',
         'reward_received',
-        'terminated'
+        'terminated',
     ]
 
 elif CONTROLLER == 'lqr':
@@ -73,7 +67,7 @@ elif CONTROLLER == 'dqn':
 else:
     raise ValueError(f"Unknown controller: {CONTROLLER}")
 
-# setup environment & logger
+# Setting the environment from cartpole and preeparing the logger
 env = gym.make('CartPole-v1', render_mode=RENDER_MODE)
 log_file, csv_writer, _ = create_logger(
     filename=LOG_FILENAME,
