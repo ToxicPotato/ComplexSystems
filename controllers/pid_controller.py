@@ -1,6 +1,5 @@
 # pid_controller.py
-
-from utils.pid import get_pid_control, preprocess_obs
+from utils.pid.pid import preprocess_obs, get_pid_control
 
 # -------------------------
 # PID Configuration

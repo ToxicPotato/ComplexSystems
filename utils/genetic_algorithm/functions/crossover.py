@@ -1,16 +1,12 @@
 import random
 
-# Uniform crossover
-# https://www.geeksforgeeks.org/crossover-in-genetic-algorithm/
-def crossover(parent1: int, parent2: int, num_bits: int = 8) -> int:
-    """
-    Uniform crossover between two parent rule numbers.
-    For each bit, randomly choose from parent1 or parent2.
-    """
-    mask = 0
-    for bit in range(num_bits):
-        if random.random() < 0.5:
-            mask |= (1 << bit)
-    # mask bits=1→take from parent1, 0→from parent2
-    offspring = (parent1 & mask) | (parent2 & ~mask)
-    return offspring
+# THIS FUNCTION COMBINES TWO PARENTS TO CREATE A CHILD USING SINGLE-POINT CROSSOVER
+# parent_one: FIRST PARENT RULE INDEX
+# parent_two: SECOND PARENT RULE INDEX
+def crossover(parent_one, parent_two):
+    # CHOOSE A RANDOM CROSSOVER POINT BETWEEN 1 AND 7
+    crossover_point = random.randint(1, 7)
+    mask = (1 << crossover_point) - 1
+    # CHILD GETS BITS FROM BOTH PARENTS
+    child_rule = (parent_one & mask) | (parent_two & ~mask)
+    return child_rule

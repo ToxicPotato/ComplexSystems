@@ -1,6 +1,5 @@
 # lqr_controller.py
-
-from utils.lqr import get_system_matrices, get_lqr_gain, preprocess_obs
+from utils.lqr.lqr import get_system_matrices, get_lqr_gain, preprocess_obs
 
 # -------------------------
 # System Configuration

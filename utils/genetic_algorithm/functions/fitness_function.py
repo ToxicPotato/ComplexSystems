@@ -1,40 +1,38 @@
-# File: fitness_function.py
 import gymnasium as gym
 
-from utils.one_d_cellular_automata import discretize_observation, step_eca, decode_action_from_row, encode_into_row
+from ca_config import BITS_PER_VALUE, ROW_LENGTH, NEIGHBORHOOD_RADIUS, NEIGHBORHOOD_SIZE, NUMBER_OF_CA_TICKS
+from utils.ca.decode_action_from_row import decode_action_from_row
+from utils.ca.discretize_observation import discretize_observation
+from utils.ca.encode_into_row import encode_into_row
+from utils.ca.step_eca import step_eca
+from utils.ca.generate_rule import generate_rule
 
-# CA / evaluation settings
-ROW_LENGTH     = 64
-BITS_PER_VALUE = 5
-ECA_TICKS      = 20
-EPISODES       = 5
-MAX_STEPS      = 500
+NUMBER_OF_EPISODES = 5
+MAXIMUM_STEPS_PER_EPISODE = 500
 
-def evaluate_rule(rule_number: int, env_name: str = "CartPole-v1") -> float:
-    """
-    Run CartPole-v1 under the given ECA rule and return average reward over EPISODES.
-    """
-    env = gym.make(env_name)
-    total_reward = 0.0
+# THIS FUNCTION EVALUATES THE AVERAGE REWARD OF A CA RULE FOR CARTPOLE CONTROL
+def evaluate_rule(rule_number, env_name="CartPole-v1"):
+    environment = gym.make(env_name)
+    sum_of_rewards = 0.0
+    rule_table = generate_rule(rule_number, NEIGHBORHOOD_SIZE)
 
-    for _ in range(EPISODES):
-        obs, _info = env.reset()
-        done, steps = False, 0
+    for episode_index in range(NUMBER_OF_EPISODES):
+        observation, info = environment.reset()
+        episode_done = False
+        step_count = 0
 
-        while not done and steps < MAX_STEPS:
-            # 1) encode observation
-            discrete = discretize_observation(obs, bits=BITS_PER_VALUE)
-            row = encode_into_row(discrete, row_length=ROW_LENGTH, bits=BITS_PER_VALUE)
-            # 2) evolve CA
-            for _ in range(ECA_TICKS):
-                row = step_eca(row, rule_number)
-            # 3) decode action
-            action = decode_action_from_row(row)
-            # 4) step environment
-            obs, reward, terminated, truncated, _info = env.step(action)
-            done = terminated or truncated
-            total_reward += reward
-            steps += 1
+        while not episode_done and step_count < MAXIMUM_STEPS_PER_EPISODE:
+            discrete_observation = discretize_observation(observation, bits=BITS_PER_VALUE)
+            ca_row = encode_into_row(discrete_observation, row_length=ROW_LENGTH, bits_per_variable=BITS_PER_VALUE)
+            for tick_index in range(NUMBER_OF_CA_TICKS):
+                ca_row = step_eca(ca_row, rule_table, NEIGHBORHOOD_RADIUS)
+            action_value = decode_action_from_row(ca_row)
+            next_observation, reward_received, terminated, truncated, info = environment.step(action_value)
+            episode_done = terminated or truncated
+            sum_of_rewards += reward_received
+            observation = next_observation
+            step_count += 1
 
-    env.close()
-    return total_reward / EPISODES
+    environment.close()
+    average_reward = sum_of_rewards / NUMBER_OF_EPISODES
+    return average_reward

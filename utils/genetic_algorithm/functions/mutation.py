@@ -1,12 +1,12 @@
-# File: mutation.py
 import random
 
-def mutate(individual: int, mutation_rate: float, num_bits: int = 8) -> int:
-    """
-    Flip each of the num_bits bits with probability mutation_rate.
-    """
-    mutant = individual
-    for bit in range(num_bits):
-        if random.random() < mutation_rate:
-            mutant ^= (1 << bit)
-    return mutant
+# THIS FUNCTION RANDOMLY FLIPS BITS IN THE INDIVIDUAL BASED ON MUTATION RATE
+# individual: THE RULE INDEX TO MUTATE
+# mutation_rate: PROBABILITY OF FLIPPING EACH BIT
+def mutate(individual, mutation_rate):
+    mutated_individual = individual
+    for bit_position in range(8):
+        random_value = random.random()
+        if random_value < mutation_rate:
+            mutated_individual = mutated_individual ^ (1 << bit_position)
+    return mutated_individual

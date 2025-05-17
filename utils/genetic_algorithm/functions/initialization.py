@@ -1,8 +1,10 @@
-# File: initialization.py
 import random
 
-def initialize_population(pop_size: int, rule_min: int = 0, rule_max: int = 255) -> list[int]:
-    """
-    Initialize a population of CA rule indices (integers) uniformly at random.
-    """
-    return [random.randint(rule_min, rule_max) for _ in range(pop_size)]
+# THIS FUNCTION CREATES THE INITIAL POPULATION OF RANDOM RULES
+# population_size: NUMBER OF RULES TO CREATE
+def initialize_population(population_size):
+    population_list = []
+    for i in range(population_size):
+        random_rule = random.randint(0, 255)
+        population_list.append(random_rule)
+    return population_list
