@@ -1,5 +1,8 @@
 import random
 
+from ca_config import TOURNAMENT_SIZE
+
+
 # THIS FUNCTION SELECTS THE TOP FRACTION OF INDIVIDUALS AS ELITES
 # population: LIST OF RULE INDICES
 # fitness_values: LIST OF FITNESS VALUES FOR THE POPULATION
@@ -35,7 +38,7 @@ def select_elites(population, fitness_values, elite_fraction):
 # population: LIST OF RULE INDICES
 # fitness_values: LIST OF FITNESS VALUES
 # tournament_size: NUMBER OF INDIVIDUALS IN THE TOURNAMENT (DEFAULT 3)
-def tournament_selection(population, fitness_values, tournament_size=3):
+def tournament_selection(population, fitness_values, tournament_size=TOURNAMENT_SIZE):
     group_indices = []
     group = []
     for i in range(tournament_size):

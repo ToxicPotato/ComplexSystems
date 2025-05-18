@@ -1,5 +1,5 @@
 # THIS FILE CONTAINS THE MAIN GENETIC ALGORITHM LOOP FOR EVOLVING CA RULES
-
+from ca_config import POPULATION_SIZE, NUMBER_OF_GENERATIONS, ELITE_PERCENTAGE, MUTATION_RATE
 from .functions.initialization import initialize_population
 from .functions.fitness_function import evaluate_rule
 from .functions.selection import select_elites, tournament_selection
@@ -11,7 +11,7 @@ from .functions.mutation import mutate
 # generations: NUMBER OF GENERATIONS TO RUN
 # elite_fraction: FRACTION OF POPULATION TO KEEP AS ELITES
 # mutation_rate: CHANCE TO FLIP EACH BIT DURING MUTATION
-def genetic_algorithm(population_size=64, generations=10, elite_fraction=0.1, mutation_rate=0.02):
+def genetic_algorithm(population_size=POPULATION_SIZE, generations=NUMBER_OF_GENERATIONS, elite_fraction=ELITE_PERCENTAGE, mutation_rate=MUTATION_RATE):
     # CREATE THE INITIAL POPULATION OF RANDOM RULES
     population = initialize_population(population_size)
 
