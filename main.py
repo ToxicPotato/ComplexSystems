@@ -1,123 +1,91 @@
 import os
+import time
+from datetime import datetime
 import gymnasium as gym
-from matplotlib import pyplot as plt
-from ca_config import BITS_PER_VALUE, ROW_LENGTH, NEIGHBORHOOD_RADIUS, NEIGHBORHOOD_SIZE, NUMBER_OF_CA_TICKS
+
+from ca_config import BITS_PER_VALUE, ROW_LENGTH, NEIGHBORHOOD_RADIUS, NUMBER_OF_CA_TICKS, ACTION_DECODING, \
+    NUMBER_OF_EPISODES
 from dynamic_logger import create_logger, log_step
 
-# choose 'ca', 'lqr', 'pid', or 'dqn'
-CONTROLLER   = 'ca'
-NUMBER_OF_EPISODES = 10
+# Experiment settings
+CONTROLLER = 'ca'  # 'ca', 'lqr', 'pid', 'dqn'
+EPISODES = NUMBER_OF_EPISODES
 RENDER_MODE = 'human'
-LOG_FILENAME = f"run_{CONTROLLER}.csv"
+RUN_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# Here we added a dynamic check for the selected controller
+# Controller selection
 if CONTROLLER == 'ca':
     from utils.genetic_algorithm.genetic_algorithm import genetic_algorithm
     from controllers.ca_controller import ca_action, set_rule_index
-
-    print("Running genetic algorithm to find the best CA rule...")
-    best_rule_index = genetic_algorithm()
-    print(f"Best CA rule index: {best_rule_index}")
-    set_rule_index(best_rule_index)
-    controller_function = ca_action
-
-    log_fields = [
-        'episode_index',
-        'step_count',
-        'observation_state',
-        'bit_pre',
-        'bit_post',
-        'action_taken',
-        'reward_received',
-        'terminated',
-    ]
-
+    print("Finding best CA rule via GA...")
+    best_rule = genetic_algorithm()
+    print(f"Best CA rule: {best_rule}")
+    set_rule_index(best_rule)
+    controller_fn = ca_action
 elif CONTROLLER == 'lqr':
-    from controllers.lqr_controller import lqr_action as controller_function
-
-    log_fields = [
-        'episode_index',
-        'step_count',
-        'observation_state',
-        'action_taken',
-        'reward_received',
-        'terminated'
-    ]
-
+    from controllers.lqr_controller import lqr_action as controller_fn
+    best_rule = None
 elif CONTROLLER == 'pid':
-    from controllers.pid_controller import pid_action as controller_function
-    
-    log_fields = [
-        'episode_index',
-        'step_count',
-        'observation_state',
-        'action_taken',
-        'reward_received',
-        'terminated'
-    ]
-
+    from controllers.pid_controller import pid_action as controller_fn
+    best_rule = None
 elif CONTROLLER == 'dqn':
-    from controllers.dqn_controller import dqn_train, dqn_action as controller_function
-
-    # train before running
+    from controllers.dqn_controller import dqn_train, dqn_action as controller_fn
     dqn_train(steps=50_000)
-
-    log_fields = [
-        'episode_index',
-        'step_count',
-        'observation_state',
-        'action_taken',
-        'reward_received',
-        'terminated'
-    ]
-
+    best_rule = None
 else:
-    raise ValueError(f"Unknown controller: {CONTROLLER}")
+    raise ValueError("Unknown controller type")
 
-# Setting the environment from cartpole and preeparing the logger
-environment = gym.make('CartPole-v1', render_mode=RENDER_MODE)
-log_file, csv_writer, _ = create_logger(filename=LOG_FILENAME, fieldnames=log_fields)
+# Setup logging
+os.makedirs('results/csv_logs', exist_ok=True)
+csv_file, csv_writer = create_logger(CONTROLLER)
 
+env = gym.make('CartPole-v1', render_mode=RENDER_MODE)
+lengths = []
 
-# ensure plots folder exists
-os.makedirs('results/plots', exist_ok=True)
+for ep in range(EPISODES):
+    obs, _ = env.reset()
+    done = False
+    step = 0
+    while not done:
+        t0 = time.perf_counter()
+        if CONTROLLER == 'ca':
+            action, bit_pre, bit_post = controller_fn(obs)
+        else:
+            action = controller_fn(obs)
+            bit_pre = bit_post = None
+        t1 = time.perf_counter()
+        next_obs, reward, term, trunc, _ = env.step(action)
+        done = term or trunc
 
-def run_episodes():
-    episode_lengths = []
-    for episode_index in range(NUMBER_OF_EPISODES):
-        observation_state, _ = environment.reset()
-        done = False
-        step_count = 0
-        while not done:
-            if CONTROLLER == 'ca':
-                action_taken, bit_pre, bit_post = controller_function(observation_state)
-            else:
-                # One value returned, set empty bit_pre and bit_post for logging
-                action_taken = controller_function(observation_state)
-                bit_pre = ""
-                bit_post = ""
-            next_observation, reward_received, terminated, truncated, _ = environment.step(action_taken)
-            log_step(
-                csv_writer, log_fields, episode_index, step_count, next_observation,
-                action_taken, reward_received, terminated, bit_pre, bit_post
-            )
-            done = terminated or truncated
-            observation_state = next_observation
-            step_count += 1
-        print(f"Episode {episode_index} finished after {step_count} steps")
-        episode_lengths.append(step_count)
-    return episode_lengths
+        log_step(
+            csv_writer,
+            run_id=RUN_ID,
+            controller_type=CONTROLLER,
+            episode_index=ep,
+            step_count=step,
+            time_start=t0,
+            time_end=t1,
+            time_delta_ms=(t1-t0)*1000,
+            observation_state=obs,
+            action_taken=action,
+            reward_received=reward,
+            terminated=done,
+            # CA params
+            bits_per_value=BITS_PER_VALUE,
+            row_length=ROW_LENGTH,
+            neighborhood_radius=NEIGHBORHOOD_RADIUS,
+            num_ca_ticks=NUMBER_OF_CA_TICKS,
+            action_decoding=ACTION_DECODING,
+            rule_index=best_rule
+        )
+        obs = next_obs
+        step += 1
+    print(f"Episode {ep} ended at step {step}")
+    lengths.append(step)
 
+# Close resources
+csv_file.close()
+env.close()
 
-if __name__ == '__main__':
-    episode_lengths = run_episodes()
-    log_file.close()
-    environment.close()
-    plt.figure()
-    plt.plot(range(NUMBER_OF_EPISODES), episode_lengths, marker='o')
-    plt.xlabel('Episode')
-    plt.ylabel('Steps Survived')
-    plt.title(f'{CONTROLLER.upper()} Learning Curve')
-    plt.savefig(f'results/plots/{CONTROLLER}_learning_curve.png')
-    plt.close()
-    print("Saved plot")
+print(f"Run {RUN_ID} completed. CSV log saved to results/csv_logs/run_{CONTROLLER}_{RUN_ID}.csv")
+print("Use the separate plot_results.py script to generate all figures.")
