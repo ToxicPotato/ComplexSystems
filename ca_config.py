@@ -2,11 +2,11 @@
 
 # CA PARAMS: SHARED PARAMETERS FOR BOTH EVALUATION AND CONTROLLER
 
-BITS_PER_VALUE      = 8        # (test only 4, 6, [8]) TESTED X
-ROW_LENGTH          = 64       # (test only 32, 48, [64]) TESTED X
-NEIGHBORHOOD_RADIUS = 1        # (test only [1], 2) TESTED X
-NUMBER_OF_CA_TICKS  = 10       # (test only 5, [10], 15) TESTED X
-ACTION_DECODING     = "center" # (test only ['center'], 'majority', 'sum') TESTED X
+BITS_PER_VALUE      = 8        # (test only 4, 6, [8]) TESTED
+ROW_LENGTH          = 64       # (test only 32, 48, [64]) TESTED
+NEIGHBORHOOD_RADIUS = 1        # (test only [1], 2) TESTED
+NUMBER_OF_CA_TICKS  = 10       # (test only 5, [10], 15) TESTED
+ACTION_DECODING     = "center" # (test only ['center'], 'majority', 'sum') TESTED
 NEIGHBORHOOD_SIZE = 2 * NEIGHBORHOOD_RADIUS + 1
 
 # GA PARAMS
@@ -19,3 +19,4 @@ MUTATION_RATE = 0.01
 
 # ENVIRONMENT
 NUMBER_OF_EPISODES = 10
+MAXIMUM_STEPS_PER_EPISODE = 500

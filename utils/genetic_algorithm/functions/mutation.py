@@ -1,12 +1,9 @@
 import random
 
-# THIS FUNCTION RANDOMLY FLIPS BITS IN THE INDIVIDUAL BASED ON MUTATION RATE
-# individual: THE RULE INDEX TO MUTATE
-# mutation_rate: PROBABILITY OF FLIPPING EACH BIT
-def mutate(individual, mutation_rate):
-    mutated_individual = individual
-    for bit_position in range(8):
-        random_value = random.random()
-        if random_value < mutation_rate:
-            mutated_individual = mutated_individual ^ (1 << bit_position)
-    return mutated_individual
+def mutate(individual_rule, mutation_rate, bits_per_value):
+    mutated_rule = individual_rule
+    for bit_index in range(bits_per_value):
+        should_flip = random.random() < mutation_rate
+        if should_flip:
+            mutated_rule ^= (1 << bit_index)  # Flip the bit at bit_index
+    return mutated_rule

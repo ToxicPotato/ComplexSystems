@@ -1,14 +1,12 @@
 import gymnasium as gym
 
-from ca_config import BITS_PER_VALUE, ROW_LENGTH, NEIGHBORHOOD_RADIUS, NEIGHBORHOOD_SIZE, NUMBER_OF_CA_TICKS
+from ca_config import BITS_PER_VALUE, ROW_LENGTH, NEIGHBORHOOD_RADIUS, NEIGHBORHOOD_SIZE, NUMBER_OF_CA_TICKS, \
+    NUMBER_OF_EPISODES, MAXIMUM_STEPS_PER_EPISODE
 from utils.ca.decode_action_from_row import decode_action_from_row
 from utils.ca.discretize_observation import discretize_observation
 from utils.ca.encode_into_row import encode_into_row
 from utils.ca.step_eca import step_eca
 from utils.ca.generate_rule import generate_rule
-
-NUMBER_OF_EPISODES = 5
-MAXIMUM_STEPS_PER_EPISODE = 500
 
 # THIS FUNCTION EVALUATES THE AVERAGE REWARD OF A CA RULE FOR CARTPOLE CONTROL
 def evaluate_rule(rule_number, env_name="CartPole-v1"):
