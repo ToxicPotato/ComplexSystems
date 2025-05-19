@@ -1,12 +1,8 @@
-# THIS FUNCTION DECODES ACTION FROM THE CENTER CELL OF THE ROW
-# row: THE CA ROW AFTER EVOLUTION
-# utils/ca/decode_action_from_row.py
-
 import numpy as np
-
 from ca_config import ACTION_DECODING
 
-
+# THIS FUNCTION DECODES ACTION FROM THE CENTER CELL OF THE ROW
+# row: THE CA ROW AFTER EVOLUTION
 def decode_action_from_row(ca_row):
     length = len(ca_row)
     ones   = int(np.sum(ca_row))

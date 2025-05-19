@@ -83,7 +83,7 @@ for ep in range(EPISODES):
     print(f"Episode {ep} ended at step {step}")
     lengths.append(step)
 
-# Close resources
+# Close
 csv_file.close()
 env.close()
 
