@@ -12,7 +12,7 @@ from utils.ca.generate_rule import generate_rule
 def evaluate_rule(rule_number, env_name="CartPole-v1"):
     environment = gym.make(env_name)
     sum_of_rewards = 0.0
-    rule_table = generate_rule(rule_number, NEIGHBORHOOD_SIZE)
+    rule_table = generate_rule(rule_number)
 
     for episode_index in range(NUMBER_OF_EPISODES):
         observation, info = environment.reset()

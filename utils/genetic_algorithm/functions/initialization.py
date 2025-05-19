@@ -1,9 +1,11 @@
 import random
 
-def initialize_population(population_size, bits_per_value):
-    highest_possible_rule = (1 << bits_per_value) - 1  # Maximum value for the given bits
-    population_list = []
+def initialize_population(population_size, rule_size):
+    population = []
     for _ in range(population_size):
-        random_rule = random.randint(0, highest_possible_rule)
-        population_list.append(random_rule)
-    return population_list
+        rule = []
+        for _ in range(rule_size):
+            bit = random.randint(0, 1)
+            rule.append(bit)
+        population.append(rule)
+    return population

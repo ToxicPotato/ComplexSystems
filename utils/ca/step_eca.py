@@ -1,9 +1,9 @@
 import numpy as np
 
-
 # THIS FUNCTION ADVANCES THE CA ROW BY ONE STEP
-# row: THE CURRENT CA ROW AS A NUMPY ARRAY
-# rule_number: THE RULE NUMBER (0-255) DEFINING THE CA UPDATE
+# current_row: THE CURRENT CA ROW AS A NUMPY ARRAY (of 0s and 1s)
+# rule_table: THE LIST OR ARRAY OF OUTPUT BITS DEFINING THE CA RULE (length = 2**neighborhood_size)
+# neighborhood_radius: NUMBER OF NEIGHBORS ON EACH SIDE
 def step_eca(current_row, rule_table, neighborhood_radius):
     row_length = current_row.size
     next_row = np.zeros_like(current_row)

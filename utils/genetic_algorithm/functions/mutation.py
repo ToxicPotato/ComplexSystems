@@ -1,9 +1,11 @@
 import random
 
-def mutate(individual_rule, mutation_rate, bits_per_value):
-    mutated_rule = individual_rule
-    for bit_index in range(bits_per_value):
-        should_flip = random.random() < mutation_rate
-        if should_flip:
-            mutated_rule ^= (1 << bit_index)  # Flip the bit at bit_index
-    return mutated_rule
+def mutate(rule_bits, mutation_rate):
+    mutated = []
+    for bit in rule_bits:
+        if random.random() < mutation_rate:
+            new_bit = 1 - bit
+        else:
+            new_bit = bit
+        mutated.append(new_bit)
+    return mutated
